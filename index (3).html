@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Garagem 77"/>
+<meta name="theme-color" content="#FFB800"/>
+<title>Garagem 77</title>
+<link rel="manifest" href="data:application/json,{
+  &quot;name&quot;:&quot;Garagem 77&quot;,
+  &quot;short_name&quot;:&quot;Garagem77&quot;,
+  &quot;start_url&quot;:&quot;/Garagem77/&quot;,
+  &quot;display&quot;:&quot;standalone&quot;,
+  &quot;background_color&quot;:&quot;#0D0D0D&quot;,
+  &quot;theme_color&quot;:&quot;#FFB800&quot;,
+  &quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23FFB800'/%3E%3Ctext y='.9em' font-size='80' x='10'%3E🏎️%3C/text%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;any&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]
+}"/>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#0D0D0D;font-family:'Segoe UI',sans-serif;transition:background .3s;}
+  input,textarea,button{font-family:'Segoe UI',sans-serif;}
+  ::-webkit-scrollbar{width:4px;height:4px;}
+  ::-webkit-scrollbar-track{background:#111;}
+  ::-webkit-scrollbar-thumb{background:#333;border-radius:4px;}
+  /* PWA tela cheia */
+  html,body,#root{height:100%;}
+  @media(display-mode:standalone){body{padding-top:env(safe-area-inset-top);}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+// ═══════════════════════════════════════════════════════════════════
+// DADOS — CARDÁPIO GARAGEM 77
+// ═══════════════════════════════════════════════════════════════════
+const CATS_COM_PAO     = ["🌭 Cachorro Quente","🍔 Burguer","💪 Super Poderosos","🐔 Frango","🥩 Filé"];
+const CATS_COM_BURGUER = ["🍔 Burguer","💪 Super Poderosos","🥩 Filé","🐔 Frango"];
+const CATS_COM_PONTO   = ["🍔 Burguer","💪 Super Poderosos","🥩 Filé","🐔 Frango"];
+
+const TIPOS_PAO = [
+  {id:"monaco",  label:"Mônaco",  desc:"Com gergelim, o mais querido"},
+  {id:"brioche", label:"Brioche", desc:"Pão adocicado, salienta o sabor"},
+  {id:"bola",    label:"Bola",    desc:"Gostinho tradicional do interior"},
+  {id:"frances", label:"Francês", desc:"Pão de água e sal do dia a dia"},
+];
+const TIPOS_HAMBURGUER = ["Hambúrguer Tradicional","Hambúrguer Artesanal de Costela"];
+const PONTOS   = ["Mal Passado","Ao Ponto (da casa)","Ao Ponto +"];
+const TAMANHOS = ["Pequena","Média","Grande"];
+// ── TODOS OS INGREDIENTES possíveis (para adicionar ao lanche)
+const TODOS_INGREDIENTES = [
+  "Alface","Tomate","Cebola","Cebola na Chapa","Cebola Roxa","Pepino","Rúcula","Agrião","Espinafre",
+  "Queijo","Queijo Derretido no Maçarico","Cheddar","Catupiry","Cream Cheese","Muçarela","Provolone","Parmesão",
+  "Bacon","Bacon Crocante","MEGA BACON","Calabresa","Presunto","Peito de Peru","Frango Desfiado",
+  "Hambúrguer","Hambúrguer de Costela","Salsicha","Ovo","Ovo Frito","Ovo Mexido","Contra Filé","Contra Filé em Pedaços",
+  "Ketchup","Maionese","Mostarda","Maionese Verde","Molho Especial","Molho Barbecue","Molho de Alho",
+  "Molho de Pimenta","Vinagrete","Vinagrete na Chapa","Catchup Defumado",
+  "Batata Palha","Batata Frita","Milho","Ervilha","Azeitona","Palmito","Champignon",
+  "Orégano","Sal","Pimenta do Reino","Chimichurri","Tempero da Casa",
+  "Abacaxi","Banana","Tomate Seco","Páprica","Limão",
+].sort();
+const MESAS    = [...Array.from({length:12},(_,i)=>`Mesa ${i+1}`),"Balcão"];
+const CORES_MESA = ["#FF6B35","#FFB800","#4ECDC4","#45B7D1","#96CEB4","#C084FC",
+                    "#F472B6","#34D399","#60A5FA","#FB923C","#A3E635","#E879F9","#94A3B8"];
+
+const CARDAPIO = [
+  // ── CACHORROS QUENTES
+  {id:1, cat:"🌭 Cachorro Quente", nome:"FUSCA",     sub:"Cachorro Quente Simples",
+   ing:["02 Salsichas","Batata Palha","Ketchup","Maionese","Mostarda"]},
+  {id:2, cat:"🌭 Cachorro Quente", nome:"KOMBI",     sub:"Cachorro Quente Especial",
+   ing:["03 Salsichas","Queijo","Alface","Tomate","Cebola","Batata Palha","Ketchup","Maionese","Mostarda"]},
+  {id:3, cat:"🌭 Cachorro Quente", nome:"PASSAT",    sub:"Cachorro com Bacon",
+   ing:["02 Salsichas","Bacon","Queijo","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:4, cat:"🌭 Cachorro Quente", nome:"CELTA",     sub:"Cachorro com Calabresa",
+   ing:["02 Salsichas","Calabresa","Queijo","Tomate","Cebola","Batata Palha","Ketchup","Maionese","Mostarda"]},
+  {id:5, cat:"🌭 Cachorro Quente", nome:"VECTRA GT", sub:"Dog Burguer",
+   ing:["02 Salsichas","Hambúrguer","Queijo","Tomate","Cebola","Batata Palha","Ketchup","Maionese","Mostarda"]},
+  {id:6, cat:"🌭 Cachorro Quente", nome:"TRACKER",   sub:"Cachorro Catupiry",
+   ing:["02 Salsichas","Catupiry","Tomate","Alface","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:7, cat:"🌭 Cachorro Quente", nome:"OMEGA",     sub:"Cachorro Catupiry com Bacon",
+   ing:["02 Salsichas","Catupiry","Bacon","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:8, cat:"🌭 Cachorro Quente", nome:"SCORT XR3", sub:"Cachorro Cheddar",
+   ing:["03 Salsichas","Queijo","Alface","Tomate","Cebola","Batata Palha","Ketchup","Maionese","Mostarda"]},
+  {id:9, cat:"🌭 Cachorro Quente", nome:"BYD",       sub:"Cachorro Cheddar com Bacon",
+   ing:["02 Salsichas","Cheddar","Bacon","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:10,cat:"🌭 Cachorro Quente", nome:"SONATA",    sub:"Cachorro Cream Cheese",
+   ing:["02 Salsichas","Cream Cheese","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  // ── BURGUERS
+  {id:11,cat:"🍔 Burguer", nome:"UP",        sub:"Hamburguer",
+   ing:["Hambúrguer","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:12,cat:"🍔 Burguer", nome:"CHEVETTE",  sub:"X-Burguer",
+   ing:["Hambúrguer","Queijo","Ketchup","Maionese","Mostarda"]},
+  {id:13,cat:"🍔 Burguer", nome:"GOL G1",    sub:"X-Salada",
+   ing:["Hambúrguer","Queijo","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:14,cat:"🍔 Burguer", nome:"GOLF",      sub:"X-Bacon",
+   ing:["Hambúrguer","Bacon","Queijo","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:15,cat:"🍔 Burguer", nome:"OPALA",     sub:"X-Bacon Egg",
+   ing:["Hambúrguer","Bacon","Ovo","Queijo","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:16,cat:"🍔 Burguer", nome:"UNO",       sub:"X-Egg",
+   ing:["Hambúrguer","Ovo","Queijo","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:17,cat:"🍔 Burguer", nome:"STILLO",    sub:"Catupiry",
+   ing:["Hambúrguer","Catupiry","Alface","Tomate","Ketchup","Maionese","Mostarda"]},
+  {id:18,cat:"🍔 Burguer", nome:"DIPLOMATA", sub:"Cheddar",
+   ing:["Hambúrguer","Cheddar","Alface","Tomate","Ketchup","Maionese","Mostarda"]},
+  {id:19,cat:"🍔 Burguer", nome:"HB20",      sub:"X-Calabresa",
+   ing:["Hambúrguer","Calabresa","Queijo","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:20,cat:"🍔 Burguer", nome:"POLO",      sub:"X-Calabresa Bacon",
+   ing:["Hambúrguer","Calabresa","Bacon","Queijo","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:21,cat:"🍔 Burguer", nome:"CADILLAC",  sub:"Três Queijos",
+   ing:["Hambúrguer","Muçarela","Catupiry","Cream Cheese","Alface","Tomate","Ketchup","Maionese","Mostarda"]},
+  {id:22,cat:"🍔 Burguer", nome:"MAREA",     sub:"Vulcão Cremosidade Extrema",
+   ing:["Hambúrguer de Costela","Cheddar","Catupiry","Alface","Tomate","Ketchup","Maionese","Mostarda"]},
+  // ── SUPER PODEROSOS
+  {id:23,cat:"💪 Super Poderosos", nome:"CORVETTE",           sub:"Double Salada",
+   ing:["2x Hambúrguer de Costela","Fatias de Queijo","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:24,cat:"💪 Super Poderosos", nome:"HELLCAT",            sub:"Double Bacon",
+   ing:["2x Hambúrguer de Costela","Bacon","Fatias de Queijo","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:25,cat:"💪 Super Poderosos", nome:"LAMBORGHINI",        sub:"Total do Brasil Catupiry",
+   ing:["2x Hambúrguer","03 Salsichas","Ovos","Bacon","Catupiry","Queijo","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:26,cat:"💪 Super Poderosos", nome:"LAND ROVER",         sub:"Total do Brasil Cheddar",
+   ing:["2x Hambúrguer","03 Salsichas","Ovos","Bacon","Cheddar","Batata Palha","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:27,cat:"💪 Super Poderosos", nome:"FIAT TORO",          sub:"Total do Brasil Cream Cheese",
+   ing:["2x Hambúrguer","03 Salsichas","Ovos","Bacon","Cream Cheese","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:28,cat:"💪 Super Poderosos", nome:"FERRARI LA FERRARIE",sub:"Mega Total do Brasil",
+   ing:["4x Hambúrguer","06 Salsichas","2x Ovos","Bacon","Catupiry","4x Queijo","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:29,cat:"💪 Super Poderosos", nome:"MUSTANG",            sub:"Insano",
+   ing:["4x Hambúrguer de Costela","Queijo","Catupiry","Bacon","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:30,cat:"💪 Super Poderosos", nome:"FERRARI MEGA BACON", sub:"Double + Mega Bacon",
+   ing:["2x Hambúrguer de Costela","MEGA BACON","Fatias de Queijo","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  // ── FRANGO
+  {id:31,cat:"🐔 Frango", nome:"PORSCHE",  sub:"X-Frango",
+   ing:["Peito de Frango","Fatias de Queijo","Alface","Tomate","Ketchup","Maionese","Mostarda"]},
+  {id:32,cat:"🐔 Frango", nome:"McLAREN",  sub:"X-Frango Bacon",
+   ing:["Peito de Frango","Bacon","Fatias de Queijo","Alface","Tomate","Ketchup","Maionese","Mostarda"]},
+  {id:33,cat:"🐔 Frango", nome:"MERCEDES", sub:"X-Frango Catupiry ou Cheddar",
+   ing:["Peito de Frango","Bacon","Catupiry ou Cheddar","Fatias de Queijo","Alface","Tomate","Ketchup","Maionese","Mostarda"]},
+  {id:34,cat:"🐔 Frango", nome:"PUNTO",    sub:"Chicken Brasil — Frango Empanado",
+   ing:["Frango Empanado","Queijo","Presunto","Catupiry","Salada","Ketchup","Maionese","Mostarda"]},
+  {id:35,cat:"🐔 Frango", nome:"ASTRA",    sub:"Chicken c/ Bacon + Frango Empanado",
+   ing:["Frango Empanado","Bacon","Queijo","Presunto","Catupiry","Salada","Ketchup","Maionese","Mostarda"]},
+  // ── FILÉ
+  {id:36,cat:"🥩 Filé", nome:"IMPALA 1967",  sub:"Bauru",
+   ing:["Contra Filé","Queijo Derretido no Maçarico","Tomate","Ketchup","Maionese","Mostarda"]},
+  {id:37,cat:"🥩 Filé", nome:"CAMARO",        sub:"Americano",
+   ing:["Contra Filé","Ovos","Queijo Derretido no Maçarico","Alface","Tomate","Cebola","Ketchup","Maionese","Mostarda"]},
+  {id:38,cat:"🥩 Filé", nome:"BUGATTI",       sub:"Bariri",
+   ing:["Contra Filé","Queijo","Vinagrete na Chapa","Ketchup","Maionese","Mostarda"]},
+  {id:39,cat:"🥩 Filé", nome:"VELOSTER",      sub:"Filezinho",
+   ing:["Contra Filé em Pedaços","Queijo","Tomate","Cebola na Chapa","Ketchup","Maionese","Mostarda"]},
+  {id:40,cat:"🥩 Filé", nome:"ONIX",          sub:"Filezinho Bacon",
+   ing:["Contra Filé em Pedaços","Bacon","Queijo","Tomate","Cebola na Chapa","Ketchup","Maionese","Mostarda"]},
+  {id:41,cat:"🥩 Filé", nome:"SAVEIRO",       sub:"Filezinho Catupiry",
+   ing:["Contra Filé em Pedaços","Catupiry","Tomate","Cebola na Chapa","Ketchup","Maionese","Mostarda"]},
+  {id:42,cat:"🥩 Filé", nome:"MONTANA",       sub:"Filezinho Cheddar",
+   ing:["Contra Filé em Pedaços","Queijo Vinagrete na Chapa","Ketchup","Maionese","Mostarda"]},
+  {id:43,cat:"🥩 Filé", nome:"CRETA",         sub:"Churrasco Assado na Grelha",
+   ing:["Contra Filé em Pedaços","Queijo Vinagrete na Chapa","Ketchup","Maionese","Mostarda"]},
+  {id:44,cat:"🥩 Filé", nome:"COROLLA CROSS", sub:"Churrasco Bacon Assado na Grelha",
+   ing:["Contra Filé em Pedaços","Bacon","Queijo Vinagrete na Chapa","Ketchup","Maionese","Mostarda"]},
+  {id:45,cat:"🥩 Filé", nome:"CAPTIVA",       sub:"Churrasco Catupiry Assado na Grelha",
+   ing:["Contra Filé em Pedaços","Catupiry","Vinagrete na Chapa","Ketchup","Maionese","Mostarda"]},
+  // ── PORÇÕES
+  {id:46,cat:"🍟 Porções", nome:"KAWASAKI",        sub:"Batata Frita",          ing:["Batata Frita","Sal","Tempero da Casa"]},
+  {id:47,cat:"🍟 Porções", nome:"DUCATI",          sub:"Porção de Contra Filé", ing:["Contra Filé","Tempero","Acompanhamentos"]},
+  {id:48,cat:"🍟 Porções", nome:"HORNET",          sub:"Porção de Frango",      ing:["Frango","Tempero","Acompanhamentos"]},
+  {id:49,cat:"🍟 Porções", nome:"BMW",             sub:"Porção de Calabresa",   ing:["Calabresa","Cebola","Tempero"]},
+  {id:50,cat:"🍟 Porções", nome:"HARLEY DAVIDSON", sub:"Porção Mista",          ing:["Frango","Contra Filé","Calabresa","Tempero"]},
+  {id:51,cat:"🍟 Porções", nome:"BMW S100 RR",     sub:"Anéis de Cebola",       ing:["Cebola Empanada","Molho Especial"]},
+  // ── BEBIDAS
+  {id:52,cat:"🥤 Bebidas", nome:"Refri Lata 350ml",        sub:"Refrigerante lata",   ing:[]},
+  {id:53,cat:"🥤 Bebidas", nome:"Refri 1 Litro",           sub:"Garrafa retornável",  ing:[]},
+  {id:54,cat:"🥤 Bebidas", nome:"Refri 2L Coca/Coca Zero", sub:"Garrafa 2 litros",    ing:[]},
+  {id:55,cat:"🥤 Bebidas", nome:"Refri 2L Roller",         sub:"Garrafa 2 litros",    ing:[]},
+  {id:56,cat:"🥤 Bebidas", nome:"Tubaina 2L",              sub:"Tubaina",             ing:[]},
+  {id:57,cat:"🥤 Bebidas", nome:"Água s/ Gás",             sub:"",                    ing:[]},
+  {id:58,cat:"🥤 Bebidas", nome:"Água c/ Gás",             sub:"",                    ing:[]},
+  {id:59,cat:"🥤 Bebidas", nome:"H2O",                     sub:"Água saborizada",     ing:[]},
+  {id:60,cat:"🥤 Bebidas", nome:"Heineken Long Neck",      sub:"Cerveja",             ing:[]},
+  {id:61,cat:"🥤 Bebidas", nome:"Heineken 0% Long Neck",   sub:"Sem álcool",          ing:[]},
+  {id:62,cat:"🥤 Bebidas", nome:"Budweiser Long Neck",     sub:"Cerveja",             ing:[]},
+  {id:63,cat:"🥤 Bebidas", nome:"Brahma 350ml",            sub:"Cerveja lata",        ing:[]},
+  {id:64,cat:"🥤 Bebidas", nome:"Boa 350ml",               sub:"Cerveja lata",        ing:[]},
+  {id:65,cat:"🥤 Bebidas", nome:"Boa Garrafa 600ml",       sub:"Cerveja garrafa",     ing:[]},
+];
+
+// ── PALETAS dark/light
+function mkC(light){
+  return light ? {
+    bg:"#F4F3EE", card:"#FFFFFF", card2:"#ECEAE3", border:"#D8D6CE",
+    yellow:"#C68A00", yellowDim:"#C68A0018",
+    text:"#111111", muted:"#666666", muted2:"#AAAAAA",
+    green:"#16A34A", red:"#DC2626",
+  } : {
+    bg:"#0D0D0D", card:"#181818", card2:"#222", border:"#2C2C2C",
+    yellow:"#FFB800", yellowDim:"#FFB80022",
+    text:"#F2F2F2", muted:"#777", muted2:"#444",
+    green:"#22C55E", red:"#EF4444",
+  };
+}
+let C = mkC(false);
+
+// ── FILA GLOBAL (substituir por Firebase depois)
+let nextId = 1;
+let filaGlobal = [];
+let syncFila = null;
+function pushPedido(p){ filaGlobal=[...filaGlobal,p]; if(syncFila) syncFila([...filaGlobal]); }
+
+// ── MÁSCARAS
+function maskTel(v){
+  const d=v.replace(/\D/g,"").slice(0,11);
+  if(d.length<=2)  return d.length?"("+d:"";
+  if(d.length<=6)  return "("+d.slice(0,2)+") "+d.slice(2);
+  if(d.length<=10) return "("+d.slice(0,2)+") "+d.slice(2,6)+"-"+d.slice(6);
+  return "("+d.slice(0,2)+") "+d.slice(2,7)+"-"+d.slice(7);
+}
+function maskCPF(v){
+  const d=v.replace(/\D/g,"").slice(0,11);
+  if(d.length<=3)  return d;
+  if(d.length<=6)  return d.slice(0,3)+"."+d.slice(3);
+  if(d.length<=9)  return d.slice(0,3)+"."+d.slice(3,6)+"."+d.slice(6);
+  return d.slice(0,3)+"."+d.slice(3,6)+"."+d.slice(6,9)+"-"+d.slice(9);
+}
+
+// ════════════════════════════════════════════════════════════════════
+function App(){
+  const [tela,setTela]   = useState("sel");
+  const [fila,setFila]   = useState([]);
+  const [light,setLight] = useState(false);
+  syncFila = setFila;
+  C = mkC(light);
+  const toggleTema = ()=>setLight(l=>!l);
+  if(tela==="sel")     return <Selector setTela={setTela} light={light} toggleTema={toggleTema}/>;
+  if(tela==="garcom")  return <Garcom   setTela={setTela} fila={fila} light={light} toggleTema={toggleTema}/>;
+  if(tela==="cozinha") return <Cozinha  setTela={setTela} fila={fila} setFila={setFila} light={light} toggleTema={toggleTema}/>;
+}
+
+// ── SELETOR
+function Selector({setTela,light,toggleTema}){
+  return(
+    <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",
+      alignItems:"center",justifyContent:"center",gap:24,padding:24,position:"relative"}}>
+      {/* Botão tema */}
+      <button onClick={toggleTema} title={light?"Modo escuro":"Modo claro"} style={{
+        position:"absolute",top:16,right:16,background:C.card,
+        border:`1px solid ${C.border}`,borderRadius:30,padding:"6px 14px",
+        cursor:"pointer",fontSize:13,fontWeight:700,
+        color:C.yellow,display:"flex",alignItems:"center",gap:6}}>
+        {light?"🌙 Escuro":"☀️ Claro"}
+      </button>
+      <div style={{textAlign:"center"}}>
+        <div style={{fontSize:54,marginBottom:6}}>🏎️</div>
+        <div style={{color:C.yellow,fontWeight:900,fontSize:32,letterSpacing:-1}}>GARAGEM 77</div>
+        <div style={{color:C.muted,fontSize:13,marginTop:2,letterSpacing:2}}>HAMBURGUERIA</div>
+      </div>
+      {[{id:"garcom",icon:"📱",label:"Atendimento",sub:"Pedidos & Clientes",note:"Celular"},
+        {id:"cozinha",icon:"🍳",label:"Cozinha",sub:"Fila & Preparo",note:"Tablet"}].map(a=>(
+        <button key={a.id} onClick={()=>setTela(a.id)} style={{
+          width:"100%",maxWidth:340,background:C.card,border:`2px solid ${C.border}`,
+          borderRadius:16,padding:"18px 20px",cursor:"pointer",textAlign:"left",
+          display:"flex",alignItems:"center",gap:14,color:C.text}}
+          onMouseEnter={e=>e.currentTarget.style.borderColor=C.yellow}
+          onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
+          <span style={{fontSize:34}}>{a.icon}</span>
+          <div>
+            <div style={{fontWeight:800,fontSize:17}}>{a.label}</div>
+            <div style={{color:C.muted,fontSize:12}}>{a.sub}</div>
+            <div style={{color:C.yellow,fontSize:11,marginTop:3,fontWeight:600}}>📱 {a.note}</div>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// GARÇOM
+// ════════════════════════════════════════════════════════════════════
+function Garcom({setTela,fila,light,toggleTema}){
+  const [aba,setAba] = useState("pedido");
+  const [clientes,setClientes] = useState([
+    {id:1,nome:"Ana Lima",   cel:"(14)99123-4567",email:"ana@email.com",cpf:"",historico:["GOL G1 s/ Cebola","KAWASAKI Média"]},
+    {id:2,nome:"João Carlos",cel:"(14)98765-0000",email:"",              cpf:"",historico:["OPALA","Refri Lata"]},
+  ]);
+  const [cliente,setCliente] = useState({nome:"",cel:"",email:"",cpf:""});
+  const [mesa,setMesa]       = useState(MESAS[0]);
+  const [itens,setItens]     = useState([]);
+  const [ativo,setAtivo]     = useState(null);
+  const [enviado,setEnviado] = useState(false);
+
+  const clienteFiel = clientes.find(c=>
+    cliente.nome.length>1 && c.nome.toLowerCase()===cliente.nome.toLowerCase());
+
+  function abrirItem(item){
+    const eBebida = item.cat.includes("Bebida");
+    setAtivo({
+      item, ing:[...item.ing], obs:"",
+      pao:       CATS_COM_PAO.includes(item.cat)     ? "monaco" : null,
+      hamburguer:CATS_COM_BURGUER.includes(item.cat) ? TIPOS_HAMBURGUER[0] : null,
+      ponto:     CATS_COM_PONTO.includes(item.cat)   ? PONTOS[1] : null,
+      tamanho:   item.cat.includes("Porção")         ? "Média" : null,
+      // bebidas
+      eBebida,
+      qtdBebida: eBebida ? 1 : null,
+      copos: eBebida ? [{tipo:"Puro",qtd:0},{tipo:"Gelo",qtd:0},{tipo:"Limão e Gelo",qtd:0},{tipo:"Laranja e Gelo",qtd:0}] : null,
+    });
+  }
+
+  function addCarrinho(){
+    if(!ativo) return;
+    const removidos = ativo.item.ing.filter(i=>!ativo.ing.includes(i));
+    const paoLabel  = ativo.pao ? TIPOS_PAO.find(p=>p.id===ativo.pao)?.label : null;
+    setItens(p=>[...p,{id:Date.now(),item:ativo.item,ing:ativo.ing,
+      removidos,obs:ativo.obs,pao:paoLabel,
+      hamburguer:ativo.hamburguer,ponto:ativo.ponto,tamanho:ativo.tamanho,
+      eBebida:ativo.eBebida,qtdBebida:ativo.qtdBebida,copos:ativo.copos}]);
+    setAtivo(null);
+  }
+
+  function enviar(){
+    if(!itens.length) return;
+    const agora = new Date();
+    const dataStr = agora.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
+    const horaStr = agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+    pushPedido({id:nextId++,mesa,cliente:cliente.nome||"—",itens,
+      hora:horaStr,data:dataStr,status:"aguardando"});
+    // Salvar no histórico do cliente se identificado
+    if(cliente.nome){
+      const resumo = itens.map(it=>{
+        let s=it.item.nome;
+        if(it.removidos?.length) s+=" s/ "+it.removidos.join(", ");
+        return s;
+      }).join(" + ");
+      setClientes(cs=>cs.map(c=>c.nome.toLowerCase()===cliente.nome.toLowerCase()
+        ? {...c, historico:[...c.historico, {texto:resumo, data:dataStr, hora:horaStr}]}
+        : c
+      ));
+    }
+    setItens([]); setCliente({nome:"",cel:"",email:"",cpf:""});
+    setEnviado(true); setTimeout(()=>setEnviado(false),2500);
+  }
+
+  return(
+    <div style={{minHeight:"100vh",background:C.bg,color:C.text,
+      maxWidth:440,margin:"0 auto",display:"flex",flexDirection:"column"}}>
+      {/* Header */}
+      <div style={{background:C.card,borderBottom:`1px solid ${C.border}`,
+        padding:"10px 14px",display:"flex",alignItems:"center",gap:10,
+        position:"sticky",top:0,zIndex:60}}>
+        <button onClick={()=>setTela("sel")} style={{background:"none",border:"none",
+          color:C.muted,fontSize:20,cursor:"pointer",padding:0}}>←</button>
+        <span style={{fontSize:18}}>🏎️</span>
+        <span style={{fontWeight:900,fontSize:15,color:C.yellow}}>GARAGEM 77</span>
+        <div style={{flex:1}}/>
+        <button onClick={toggleTema} style={{background:C.card2,border:`1px solid ${C.border}`,
+          borderRadius:20,padding:"4px 10px",cursor:"pointer",
+          fontSize:12,fontWeight:700,color:C.yellow,marginRight:6}}>
+          {light?"🌙":"☀️"}
+        </button>
+        {itens.length>0 &&
+          <span style={{background:C.yellow,color:"#000",borderRadius:20,
+            padding:"2px 10px",fontSize:12,fontWeight:800}}>
+            {itens.length} {itens.length===1?"item":"itens"}
+          </span>}
+      </div>
+      {/* Abas */}
+      <div style={{display:"flex",background:C.card,borderBottom:`1px solid ${C.border}`}}>
+        {[["pedido","🛒 Pedido"],["clientes","👥 Clientes"],["relatorios","📊 Relatórios"]].map(([id,lb])=>(
+          <button key={id} onClick={()=>setAba(id)} style={{
+            flex:1,padding:"9px 4px",background:"none",border:"none",
+            borderBottom:aba===id?`2px solid ${C.yellow}`:"2px solid transparent",
+            color:aba===id?C.yellow:C.muted,cursor:"pointer",
+            fontSize:11,fontWeight:aba===id?800:400}}>
+            {lb}
+          </button>
+        ))}
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:14}}>
+        {aba==="pedido"    && <PedidoPage {...{mesa,setMesa,cliente,setCliente,clienteFiel,
+          itens,setItens,ativo,setAtivo,abrirItem,addCarrinho,enviar,enviado,clientes,setClientes}}/>}
+        {aba==="clientes"  && <ClientesPage clientes={clientes} setClientes={setClientes} fila={fila}/>}
+        {aba==="relatorios"&& <RelatoriosPage clientes={clientes} fila={fila}/>}
+      </div>
+    </div>
+  );
+}
+
+function PedidoPage({mesa,setMesa,cliente,setCliente,clienteFiel,
+  itens,setItens,ativo,setAtivo,abrirItem,addCarrinho,enviar,enviado,clientes,setClientes}){
+  const [catSel,setCatSel] = useState("🌭 Cachorro Quente");
+  const [busca,setBusca]   = useState("");
+  const cats = [...new Set(CARDAPIO.map(i=>i.cat))];
+  // filtro: se há busca, ignora categoria
+  const itensFiltrados = busca.trim().length>1
+    ? CARDAPIO.filter(i=>
+        i.nome.toLowerCase().includes(busca.toLowerCase()) ||
+        i.sub.toLowerCase().includes(busca.toLowerCase()) ||
+        i.ing.some(g=>g.toLowerCase().includes(busca.toLowerCase())))
+    : CARDAPIO.filter(i=>i.cat===catSel);
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:14}}>
+      {/* Mesa */}
+      <div>
+        <Lbl>Mesa</Lbl>
+        <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
+          {MESAS.map((m,i)=>(
+            <Chip key={m} ativo={mesa===m} cor={CORES_MESA[i%CORES_MESA.length]}
+              onClick={()=>setMesa(m)}>{m}</Chip>
+          ))}
+        </div>
+      </div>
+      {/* Cliente */}
+      <Crd>
+        <Lbl>Cliente (opcional)</Lbl>
+        <ClienteAutocomplete
+          value={cliente.nome}
+          clientes={clientes}
+          onChange={nome=>setCliente(c=>({...c,nome}))}
+          onSelect={c=>setCliente({nome:c.nome,cel:c.cel,email:c.email,cpf:c.cpf})}
+        />
+        {clienteFiel &&
+          <div style={{marginTop:8,background:C.yellowDim,borderRadius:8,
+            padding:"7px 10px",fontSize:12,color:C.yellow}}>
+            ⭐ Cliente frequente — Pediu antes: {clienteFiel.historico.slice(-3).map(h=>typeof h==="object"?h.texto:h).join(", ")}
+          </div>}
+      </Crd>
+      {/* Configurar item */}
+      {ativo && <ConfigItem ativo={ativo} setAtivo={setAtivo} addCarrinho={addCarrinho}/>}
+      {/* Cardápio */}
+      {!ativo && <>
+        <div>
+          <Lbl>Cardápio</Lbl>
+          {/* Campo de busca */}
+          <div style={{position:"relative",marginTop:8,marginBottom:4}}>
+            <input value={busca} onChange={e=>setBusca(e.target.value)}
+              placeholder="🔍 Buscar lanche, porção ou bebida…"
+              style={{width:"100%",background:C.card,border:`1px solid ${busca?C.yellow:C.border}`,
+                borderRadius:10,padding:"10px 36px 10px 12px",color:C.text,fontSize:14,
+                boxSizing:"border-box",outline:"none"}}/>
+            {busca&&<button onClick={()=>setBusca("")} style={{position:"absolute",right:10,
+              top:"50%",transform:"translateY(-50%)",background:"none",border:"none",
+              color:C.muted,cursor:"pointer",fontSize:16,lineHeight:1}}>✕</button>}
+          </div>
+          {/* Categorias — só mostra se não estiver buscando */}
+          {!busca.trim() && <div style={{display:"flex",gap:5,marginTop:7,overflowX:"auto",paddingBottom:4}}>
+            {cats.map(c=>(
+              <button key={c} onClick={()=>setCatSel(c)} style={{
+                flexShrink:0,padding:"5px 10px",borderRadius:20,border:"none",
+                cursor:"pointer",fontSize:11,fontWeight:600,whiteSpace:"nowrap",
+                background:catSel===c?C.yellow:C.card2,
+                color:catSel===c?"#000":C.muted}}>
+                {c}
+              </button>
+            ))}
+          </div>}
+          {/* Label resultado busca */}
+          {busca.trim().length>1 && itensFiltrados.length===0 &&
+            <div style={{color:C.muted,fontSize:13,padding:"12px 4px"}}>
+              Nenhum item encontrado para "{busca}"
+            </div>}
+          {busca.trim().length>1 && itensFiltrados.length>0 &&
+            <div style={{fontSize:11,color:C.muted,padding:"6px 2px"}}>
+              {itensFiltrados.length} resultado{itensFiltrados.length>1?"s":""}
+            </div>}
+          <div style={{display:"flex",flexDirection:"column",gap:7,marginTop:6}}>
+            {itensFiltrados.map(item=>(
+              <button key={item.id} onClick={()=>abrirItem(item)} style={{
+                background:C.card,border:`1px solid ${C.border}`,borderRadius:12,
+                padding:"14px 15px",cursor:"pointer",textAlign:"left",color:C.text}}
+                onMouseEnter={e=>e.currentTarget.style.borderColor=C.yellow}
+                onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
+                <div style={{display:"flex",alignItems:"baseline",gap:8,flexWrap:"wrap"}}>
+                  <span style={{color:C.yellow,fontWeight:900,fontSize:18}}>{item.nome}</span>
+                  {item.sub&&<span style={{color:C.muted,fontSize:14}}>{item.sub}</span>}
+                </div>
+                {item.ing.length>0&&
+                  <div style={{color:"#888",fontSize:14,marginTop:5,lineHeight:1.5}}>{item.ing.join(" · ")}</div>}
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* Carrinho */}
+        {itens.length>0 &&
+          <Crd>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+              <Lbl>Pedido — {mesa}</Lbl>
+              <span style={{fontSize:11,color:C.muted}}>{itens.length} {itens.length===1?"item":"itens"}</span>
+            </div>
+            {itens.map(it=>(
+              <div key={it.id} style={{display:"flex",alignItems:"flex-start",
+                gap:8,marginTop:9,paddingTop:9,borderTop:`1px solid ${C.border}`}}>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{fontWeight:700,fontSize:13,color:C.yellow}}>{it.item.nome}</div>
+                    {it.eBebida && it.qtdBebida>1 &&
+                      <Pill c="#4ECDC4">x{it.qtdBebida}</Pill>}
+                  </div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:3}}>
+                    {it.pao        && <Pill c="#A78BFA">🍞 {it.pao}</Pill>}
+                    {it.tamanho    && <Pill c="#60A5FA">📏 {it.tamanho}</Pill>}
+                    {it.hamburguer && <Pill c="#F59E0B">🥩 {it.hamburguer}</Pill>}
+                    {it.ponto      && <Pill c="#FB923C">🔥 {it.ponto}</Pill>}
+                    {it.copos?.filter(c=>c.qtd>0).map(c=>(
+                      <Pill key={c.tipo} c="#4ECDC4">🧊 {c.tipo} x{c.qtd}</Pill>
+                    ))}
+                  </div>
+                  {it.removidos.length>0 &&
+                    <div style={{color:C.red,fontSize:11,marginTop:2}}>s/ {it.removidos.join(", ")}</div>}
+                  {it.obs&&<div style={{color:"#aaa",fontSize:11}}>📝 {it.obs}</div>}
+                </div>
+                <button onClick={()=>setItens(p=>p.filter(x=>x.id!==it.id))} style={{
+                  background:C.red+"22",border:"none",color:C.red,
+                  borderRadius:6,padding:"2px 7px",cursor:"pointer",fontSize:12}}>✕</button>
+              </div>
+            ))}
+            <button onClick={enviar} style={{
+              width:"100%",marginTop:14,padding:"13px",borderRadius:12,border:"none",
+              background:enviado?C.green:C.yellow,color:enviado?"#fff":"#000",
+              cursor:"pointer",fontWeight:900,fontSize:15}}>
+              {enviado?"✓ Enviado para Cozinha!":"🚀 Enviar para Cozinha"}
+            </button>
+          </Crd>}
+      </>}
+    </div>
+  );
+}
+
+function ConfigItem({ativo,setAtivo,addCarrinho}){
+  return(
+    <div style={{background:C.card,border:`2px solid ${C.yellow}`,
+      borderRadius:16,padding:16,display:"flex",flexDirection:"column",gap:14}}>
+      <div>
+        <div style={{color:C.yellow,fontWeight:900,fontSize:18}}>{ativo.item.nome}</div>
+        {ativo.item.sub&&<div style={{color:C.muted,fontSize:12,marginTop:1}}>{ativo.item.sub}</div>}
+      </div>
+      {/* Tamanho */}
+      {ativo.tamanho!==null &&
+        <Sec title="Tamanho">
+          <div style={{display:"flex",gap:7}}>
+            {TAMANHOS.map(t=>(
+              <button key={t} onClick={()=>setAtivo(a=>({...a,tamanho:t}))} style={{
+                flex:1,padding:"8px",borderRadius:9,border:"none",cursor:"pointer",
+                fontWeight:700,fontSize:13,
+                background:ativo.tamanho===t?C.yellow:C.card2,
+                color:ativo.tamanho===t?"#000":C.muted}}>
+                {t}
+              </button>
+            ))}
+          </div>
+        </Sec>}
+      {/* Pão */}
+      {ativo.pao!==null &&
+        <Sec title="Escolha o Pão">
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
+            {TIPOS_PAO.map(p=>{
+              const sel=ativo.pao===p.id;
+              return(
+                <button key={p.id} onClick={()=>setAtivo(a=>({...a,pao:p.id}))} style={{
+                  padding:"9px 10px",borderRadius:10,cursor:"pointer",textAlign:"left",
+                  border:`2px solid ${sel?C.yellow:C.border}`,
+                  background:sel?C.yellowDim:"transparent",color:C.text}}>
+                  <div style={{fontWeight:800,fontSize:13,color:sel?C.yellow:C.text}}>{p.label}</div>
+                  <div style={{fontSize:10,color:C.muted,marginTop:1}}>{p.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+        </Sec>}
+      {/* Hambúrguer */}
+      {ativo.hamburguer!==null &&
+        <Sec title="Tipo de Hambúrguer">
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            {TIPOS_HAMBURGUER.map(t=>{
+              const sel=ativo.hamburguer===t;
+              return(
+                <button key={t} onClick={()=>setAtivo(a=>({...a,hamburguer:t}))} style={{
+                  padding:"9px 12px",borderRadius:9,cursor:"pointer",textAlign:"left",
+                  border:`1.5px solid ${sel?C.yellow:C.border}`,
+                  background:sel?C.yellowDim:"transparent",
+                  color:sel?C.yellow:C.muted,fontWeight:sel?700:400,fontSize:13}}>
+                  {sel?"◉ ":"○ "}{t}
+                </button>
+              );
+            })}
+          </div>
+        </Sec>}
+      {/* Ponto */}
+      {ativo.ponto!==null &&
+        <Sec title="Ponto da Carne">
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {PONTOS.map(p=>{
+              const sel=ativo.ponto===p;
+              return(
+                <button key={p} onClick={()=>setAtivo(a=>({...a,ponto:p}))} style={{
+                  padding:"6px 11px",borderRadius:20,cursor:"pointer",
+                  border:`1.5px solid ${sel?C.yellow:C.border}`,
+                  background:sel?C.yellowDim:"transparent",
+                  color:sel?C.yellow:C.muted,fontSize:12,fontWeight:sel?700:400}}>
+                  {p}
+                </button>
+              );
+            })}
+          </div>
+        </Sec>}
+      {/* Bebida OU Ingredientes */}
+      {ativo.eBebida
+        ? <BebidaEditor ativo={ativo} setAtivo={setAtivo}/>
+        : <IngredientesEditor ativo={ativo} setAtivo={setAtivo}/>}
+      {/* Obs */}
+      <Sec title="Observações">
+        <textarea value={ativo.obs} onChange={e=>setAtivo(a=>({...a,obs:e.target.value}))}
+          placeholder="Alguma observação especial…"
+          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,
+            borderRadius:8,padding:"8px 10px",color:C.text,fontSize:13,
+            resize:"none",height:52,boxSizing:"border-box"}}/>
+      </Sec>
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={()=>setAtivo(null)} style={{
+          flex:1,padding:"10px",borderRadius:10,border:`1px solid ${C.border}`,
+          background:"transparent",color:C.muted,cursor:"pointer",fontWeight:600}}>
+          Cancelar
+        </button>
+        <button onClick={addCarrinho} style={{
+          flex:2,padding:"10px",borderRadius:10,border:"none",
+          background:C.yellow,color:"#000",cursor:"pointer",fontWeight:900,fontSize:14}}>
+          + Adicionar ao Pedido
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ClientesPage({clientes,setClientes,fila}){
+  const [busca,setBusca]       = useState("");
+  const [novo,setNovo]         = useState({nome:"",cel:"",email:"",cpf:""});
+  const [aberto,setAberto]     = useState(false);
+  const [clienteSel,setClienteSel] = useState(null);
+
+  const lista = clientes.filter(c=>
+    c.nome.toLowerCase().includes(busca.toLowerCase())||c.cel.includes(busca));
+
+  // se tem cliente selecionado, mostra ficha dele
+  if(clienteSel){
+    return <FichaCliente
+      cliente={clienteSel}
+      fila={fila}
+      onVoltar={()=>setClienteSel(null)}
+      onSalvar={dados=>{
+        setClientes(cs=>cs.map(c=>c.id===dados.id?dados:c));
+        setClienteSel(dados);
+      }}
+      onExcluir={id=>{
+        setClientes(cs=>cs.filter(c=>c.id!==id));
+        setClienteSel(null);
+      }}
+    />;
+  }
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      <Inp placeholder="🔍 Buscar cliente…" value={busca} onChange={e=>setBusca(e.target.value)}/>
+      <button onClick={()=>setAberto(!aberto)} style={{
+        background:C.yellow,border:"none",borderRadius:10,padding:"10px",
+        color:"#000",fontWeight:800,cursor:"pointer"}}>
+        + Novo Cliente
+      </button>
+      {aberto &&
+        <Crd style={{borderColor:C.yellow}}>
+          <Inp mt={8} placeholder="Nome" value={novo.nome}
+            onChange={e=>setNovo(n=>({...n,nome:e.target.value}))}/>
+          <Inp mt={8} placeholder="Celular — (00) 00000-0000" value={novo.cel}
+            onChange={e=>setNovo(n=>({...n,cel:maskTel(e.target.value)}))}/>
+          <Inp mt={8} placeholder="E-mail (opcional)" value={novo.email}
+            onChange={e=>setNovo(n=>({...n,email:e.target.value}))}/>
+          <Inp mt={8} placeholder="CPF — 000.000.000-00" value={novo.cpf}
+            onChange={e=>setNovo(n=>({...n,cpf:maskCPF(e.target.value)}))}/>
+          <button onClick={()=>{
+            if(!novo.nome) return;
+            setClientes(c=>[...c,{id:Date.now(),...novo,historico:[],nascimento:"",obs:""}]);
+            setNovo({nome:"",cel:"",email:"",cpf:""}); setAberto(false);
+          }} style={{marginTop:10,width:"100%",background:C.yellow,border:"none",
+            borderRadius:8,padding:10,color:"#000",fontWeight:800,cursor:"pointer"}}>
+            Salvar Cliente
+          </button>
+        </Crd>}
+      {lista.map(c=>(
+        <button key={c.id} onClick={()=>setClienteSel(c)} style={{
+          background:C.card,border:`1px solid ${C.border}`,borderRadius:12,
+          padding:"13px",cursor:"pointer",textAlign:"left",width:"100%",color:C.text}}
+          onMouseEnter={e=>e.currentTarget.style.borderColor=C.yellow}
+          onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+            <div>
+              <div style={{fontWeight:800,color:C.yellow,fontSize:15}}>{c.nome}</div>
+              {c.cel  &&<div style={{fontSize:13,color:C.muted,marginTop:2}}>{c.cel}</div>}
+              {c.email&&<div style={{fontSize:12,color:C.muted}}>{c.email}</div>}
+              {c.cpf  &&<div style={{fontSize:11,color:C.muted}}>CPF: {c.cpf}</div>}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}}>
+              <span style={{background:C.yellowDim,color:C.yellow,borderRadius:20,
+                padding:"2px 10px",fontSize:12,fontWeight:700}}>
+                {c.historico.length} pedidos
+              </span>
+              <span style={{color:C.muted,fontSize:11}}>Ver ficha →</span>
+            </div>
+          </div>
+          {c.historico.length>0&&
+            <div style={{marginTop:6,fontSize:12,color:C.muted}}>
+              Último: {typeof c.historico[c.historico.length-1]==="object"
+                ? c.historico[c.historico.length-1].texto
+                : c.historico[c.historico.length-1]}
+            </div>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── FICHA DO CLIENTE ──────────────────────────────────────────────
+function FichaCliente({cliente,fila,onVoltar,onSalvar,onExcluir}){
+  const [editando,setEditando] = useState(false);
+  const [form,setForm]         = useState({...cliente});
+  const [confirmarDel,setConfirmarDel] = useState(false);
+
+  // pedidos reais deste cliente na fila atual
+  const pedidosCliente = fila.filter(p=>
+    p.cliente.toLowerCase()===cliente.nome.toLowerCase());
+
+  function salvar(){
+    onSalvar(form);
+    setEditando(false);
+  }
+
+  // Estatísticas rápidas
+  const totalPedidos = cliente.historico.length + pedidosCliente.length;
+  const lanchesFav = {};
+  [...cliente.historico].forEach(h=>{
+    const nome = h.split(" s/")[0].split(" c/")[0].trim();
+    lanchesFav[nome] = (lanchesFav[nome]||0)+1;
+  });
+  pedidosCliente.forEach(p=>p.itens.forEach(it=>{
+    lanchesFav[it.item.nome] = (lanchesFav[it.item.nome]||0)+1;
+  }));
+  const topLanches = Object.entries(lanchesFav).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:0,minHeight:"100%"}}>
+      {/* Header ficha */}
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+        <button onClick={onVoltar} style={{background:"none",border:"none",
+          color:C.muted,fontSize:20,cursor:"pointer",padding:0,lineHeight:1}}>←</button>
+        <div style={{flex:1}}>
+          <div style={{fontWeight:900,fontSize:18,color:C.yellow}}>{cliente.nome}</div>
+          <div style={{fontSize:11,color:C.muted}}>Ficha do cliente</div>
+        </div>
+        <button onClick={()=>setEditando(!editando)} style={{
+          background:editando?C.yellowDim:"transparent",
+          border:`1.5px solid ${C.yellow}`,borderRadius:8,
+          padding:"6px 12px",cursor:"pointer",
+          color:C.yellow,fontSize:12,fontWeight:700}}>
+          {editando?"✕ Cancelar":"✏️ Editar"}
+        </button>
+      </div>
+
+      {/* Modo edição */}
+      {editando ? (
+        <Crd style={{borderColor:C.yellow,marginBottom:14}}>
+          <Lbl>Dados do cliente</Lbl>
+          <Inp mt={10} placeholder="Nome" value={form.nome}
+            onChange={e=>setForm(f=>({...f,nome:e.target.value}))}/>
+          <Inp mt={8} placeholder="Celular — (00) 00000-0000" value={form.cel}
+            onChange={e=>setForm(f=>({...f,cel:maskTel(e.target.value)}))}/>
+          <Inp mt={8} placeholder="E-mail" value={form.email||""}
+            onChange={e=>setForm(f=>({...f,email:e.target.value}))}/>
+          <Inp mt={8} placeholder="CPF — 000.000.000-00" value={form.cpf}
+            onChange={e=>setForm(f=>({...f,cpf:maskCPF(e.target.value)}))}/>
+          <Inp mt={8} placeholder="Data de nascimento (dd/mm/aaaa)" value={form.nascimento||""}
+            onChange={e=>setForm(f=>({...f,nascimento:e.target.value}))}/>
+          <textarea value={form.obs||""} onChange={e=>setForm(f=>({...f,obs:e.target.value}))}
+            placeholder="Observações (ex: alergia a glúten, cliente VIP…)"
+            style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,
+              borderRadius:8,padding:"8px 10px",color:C.text,fontSize:13,
+              resize:"none",height:64,boxSizing:"border-box",marginTop:8}}/>
+          <button onClick={salvar} style={{
+            marginTop:12,width:"100%",background:C.yellow,border:"none",
+            borderRadius:8,padding:"11px",color:"#000",fontWeight:900,cursor:"pointer",fontSize:14}}>
+            ✓ Salvar alterações
+          </button>
+          <div style={{marginTop:12,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
+            {!confirmarDel ?
+              <button onClick={()=>setConfirmarDel(true)} style={{
+                width:"100%",background:"transparent",border:`1px solid ${C.red}`,
+                borderRadius:8,padding:"9px",color:C.red,cursor:"pointer",
+                fontWeight:700,fontSize:13}}>
+                🗑️ Excluir cliente
+              </button>
+            :
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                <div style={{color:C.red,fontSize:13,fontWeight:600,textAlign:"center"}}>
+                  Confirmar exclusão de {cliente.nome}?
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>setConfirmarDel(false)} style={{
+                    flex:1,background:"transparent",border:`1px solid ${C.border}`,
+                    borderRadius:8,padding:"8px",color:C.muted,cursor:"pointer",fontWeight:600}}>
+                    Cancelar
+                  </button>
+                  <button onClick={()=>onExcluir(cliente.id)} style={{
+                    flex:1,background:C.red,border:"none",
+                    borderRadius:8,padding:"8px",color:"#fff",cursor:"pointer",fontWeight:800}}>
+                    Sim, excluir
+                  </button>
+                </div>
+              </div>}
+          </div>
+        </Crd>
+      ) : (
+        /* Modo visualização */
+        <>
+          {/* Dados */}
+          <Crd style={{marginBottom:12}}>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {[
+                ["📱","Celular",cliente.cel],
+                ["✉️","E-mail",cliente.email],
+                ["🪪","CPF",cliente.cpf],
+                ["🎂","Nascimento",cliente.nascimento],
+                ["📝","Obs",cliente.obs],
+              ].filter(([,,v])=>v).map(([ic,lb,vl])=>(
+                <div key={lb} style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+                  <span style={{fontSize:15,flexShrink:0}}>{ic}</span>
+                  <div>
+                    <div style={{fontSize:10,color:C.muted,textTransform:"uppercase",letterSpacing:.8}}>{lb}</div>
+                    <div style={{fontSize:14,color:C.text,marginTop:1}}>{vl}</div>
+                  </div>
+                </div>
+              ))}
+              {!cliente.cel&&!cliente.email&&!cliente.cpf&&
+                <div style={{color:C.muted,fontSize:13}}>Nenhum dado de contato cadastrado.</div>}
+            </div>
+          </Crd>
+
+          {/* Estatísticas */}
+          <div style={{display:"flex",gap:8,marginBottom:12}}>
+            {[
+              [totalPedidos,"pedidos","#FFB800"],
+              [topLanches.length,"lanches fav.","#4ECDC4"],
+              [pedidosCliente.length,"hoje","#22C55E"],
+            ].map(([n,l,cor])=>(
+              <div key={l} style={{flex:1,background:C.card,border:`1px solid ${C.border}`,
+                borderRadius:12,padding:"10px 8px",textAlign:"center"}}>
+                <div style={{fontSize:22,fontWeight:900,color:cor}}>{n}</div>
+                <div style={{fontSize:10,color:C.muted,marginTop:1}}>{l}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Lanches favoritos */}
+          {topLanches.length>0 &&
+            <Crd style={{marginBottom:12}}>
+              <Lbl>🏆 Lanches favoritos</Lbl>
+              <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:8}}>
+                {topLanches.map(([nome,qtd],i)=>(
+                  <div key={nome} style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:20,height:20,borderRadius:"50%",
+                      background:C.yellowDim,color:C.yellow,
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      fontSize:11,fontWeight:800,flexShrink:0}}>
+                      {i+1}
+                    </div>
+                    <div style={{flex:1,fontSize:14,color:C.text,fontWeight:i===0?700:400}}>{nome}</div>
+                    <div style={{fontSize:12,color:C.muted}}>{qtd}x</div>
+                    <div style={{width:60,height:4,borderRadius:4,background:C.border,overflow:"hidden"}}>
+                      <div style={{height:"100%",background:C.yellow,
+                        width:`${Math.round(qtd/topLanches[0][1]*100)}%`}}/>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Crd>}
+
+          {/* Histórico textual */}
+          {cliente.historico.length>0 &&
+            <Crd style={{marginBottom:12}}>
+              <Lbl>📋 Histórico de pedidos</Lbl>
+              <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:8}}>
+                {[...cliente.historico].reverse().map((h,i)=>{
+                  const item = typeof h==="object" ? h : {texto:h,data:"—",hora:""};
+                  return(
+                  <div key={i} style={{padding:"8px 0",
+                    borderBottom:i<cliente.historico.length-1?`1px solid ${C.border}`:"none"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+                      <span style={{fontSize:12,color:C.muted,flexShrink:0}}>#{cliente.historico.length-i}</span>
+                      <span style={{fontSize:11,color:C.yellow,fontWeight:600}}>
+                        {item.data}{item.hora?" · "+item.hora:""}
+                      </span>
+                    </div>
+                    <span style={{fontSize:13,color:C.text,paddingLeft:20}}>{item.texto}</span>
+                  </div>
+                  );
+                })}
+              </div>
+            </Crd>}
+
+          {/* Pedidos ativos hoje */}
+          {pedidosCliente.length>0 &&
+            <Crd>
+              <Lbl>🟢 Pedidos ativos hoje</Lbl>
+              {pedidosCliente.map(p=>(
+                <div key={p.id} style={{marginTop:10,paddingTop:10,
+                  borderTop:`1px solid ${C.border}`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                    <span style={{background:C.yellow,color:"#000",borderRadius:5,
+                      padding:"1px 7px",fontSize:12,fontWeight:900}}>#{p.id}</span>
+                    <span style={{fontSize:12,color:C.muted}}>{p.mesa} · {p.hora}</span>
+                    <span style={{fontSize:11,color:C.green,marginLeft:"auto",fontWeight:700}}>
+                      {p.status}
+                    </span>
+                  </div>
+                  {p.itens.map(it=>(
+                    <div key={it.id} style={{fontSize:13,color:C.text,
+                      padding:"3px 0 3px 20px"}}>
+                      • {it.item.nome}
+                      {it.removidos?.length>0 &&
+                        <span style={{color:C.red,fontSize:11}}> s/ {it.removidos.join(", ")}</span>}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </Crd>}
+        </>
+      )}
+    </div>
+  );
+}
+
+function RelatoriosPage({clientes,fila}){
+  const rels=[
+    {e:"🏆",t:"Clientes mais frequentes",      d:"Ranking por número de visitas",    c:"#FFB800"},
+    {e:"🍔",t:"Lanches mais pedidos",           d:"Top 10 por volume no período",     c:"#4ECDC4"},
+    {e:"📅",t:"Frequência por dia da semana",   d:"Dias e horários mais movimentados",c:"#45B7D1"},
+    {e:"⏱️",t:"Clientes sumidos",               d:"Sem visitar há mais de 30 dias",   c:"#EF4444"},
+    {e:"🎂",t:"Aniversariantes do mês",         d:"Para ações promocionais",          c:"#96CEB4"},
+    {e:"🗂️",t:"Preferências de personalização", d:"Remoções mais comuns por item",    c:"#C084FC"},
+    {e:"📊",t:"Volume por mesa",                d:"Mesa mais ativa",                  c:"#F472B6"},
+    {e:"🌟",t:"Clientes VIP",                   d:"Maior frequência e ticket",        c:"#FB923C"},
+  ];
+  const totalItens=fila.reduce((a,p)=>a+p.itens.length,0);
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:9}}>
+      <Crd>
+        <div style={{display:"flex"}}>
+          {[[clientes.length,"clientes"],[fila.length,"pedidos hoje"],[totalItens,"itens hoje"]].map(([n,l],i)=>(
+            <div key={i} style={{flex:1,textAlign:"center",
+              borderLeft:i>0?`1px solid ${C.border}`:undefined}}>
+              <div style={{fontSize:26,fontWeight:900,color:C.yellow}}>{n}</div>
+              <div style={{fontSize:10,color:C.muted}}>{l}</div>
+            </div>
+          ))}
+        </div>
+      </Crd>
+      {rels.map((r,i)=>(
+        <div key={i} style={{background:C.card,borderRadius:12,padding:13,
+          border:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
+          <div style={{width:38,height:38,borderRadius:10,background:r.c+"22",
+            display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
+            {r.e}
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:700,color:C.text,fontSize:13}}>{r.t}</div>
+            <div style={{fontSize:11,color:C.muted}}>{r.d}</div>
+          </div>
+          <span style={{color:C.muted}}>›</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// COZINHA
+// ════════════════════════════════════════════════════════════════════
+function Cozinha({setTela,fila,setFila,light,toggleTema}){
+  const [preparando,setPreparando] = useState([]);
+
+  const mesaCor={};
+  [...new Set(fila.map(p=>p.mesa))].forEach((m,i)=>{mesaCor[m]=CORES_MESA[i%CORES_MESA.length];});
+
+  function toggle(pid,iid){
+    const k=`${pid}-${iid}`;
+    setPreparando(p=>p.includes(k)?p.filter(x=>x!==k):[...p,k]);
+  }
+  function finalizar(pid,iid){
+    setPreparando(p=>p.filter(x=>x!==`${pid}-${iid}`));
+    setFila(f=>f.map(p=>p.id===pid?{...p,itens:p.itens.filter(i=>i.id!==iid)}:p).filter(p=>p.itens.length>0));
+  }
+
+  const emPreparo=[];
+  fila.forEach(ped=>ped.itens.forEach(it=>{
+    if(preparando.includes(`${ped.id}-${it.id}`)) emPreparo.push({ped,it});
+  }));
+  const cols=emPreparo.length<=1?"1fr":emPreparo.length===2?"1fr 1fr":"1fr 1fr 1fr";
+
+  return(
+    <div style={{height:"100vh",background:C.bg,color:C.text,
+      display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      {/* Header */}
+      <div style={{background:C.card,borderBottom:`1px solid ${C.border}`,
+        padding:"9px 18px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+        <button onClick={()=>setTela("sel")} style={{background:"none",border:"none",
+          color:C.muted,cursor:"pointer",fontSize:18,padding:0}}>←</button>
+        <span style={{fontSize:20}}>🏎️</span>
+        <span style={{fontWeight:900,fontSize:17,color:C.yellow}}>GARAGEM 77</span>
+        <span style={{color:C.muted,fontSize:13,marginLeft:2}}>— Cozinha</span>
+        <div style={{flex:1}}/>
+        <button onClick={toggleTema} style={{background:C.card2,border:`1px solid ${C.kBorder||C.border}`,
+          borderRadius:20,padding:"4px 10px",cursor:"pointer",
+          fontSize:12,fontWeight:700,color:C.yellow,marginRight:4}}>
+          {light?"🌙":"☀️"}
+        </button>
+        <KTag c="#FFB800">{fila.reduce((a,p)=>a+p.itens.length,0)} na fila</KTag>
+        <KTag c="#22C55E">{emPreparo.length} preparando</KTag>
+      </div>
+      {/* Layout */}
+      <div style={{flex:1,display:"flex",overflow:"hidden"}}>
+        {/* FILA LATERAL */}
+        <div style={{width:270,flexShrink:0,background:C.card,
+          borderRight:`1px solid #272727`,overflowY:"auto",display:"flex",flexDirection:"column"}}>
+          <div style={{padding:"10px 12px",borderBottom:`1px solid ${C.border}`,
+            fontSize:10,textTransform:"uppercase",letterSpacing:1,color:C.muted}}>
+            Fila de pedidos
+          </div>
+          {fila.length===0 &&
+            <div style={{padding:20,color:C.muted,textAlign:"center",fontSize:13,marginTop:16}}>
+              Nenhum pedido na fila
+            </div>}
+          {fila.map(ped=>(
+            <div key={ped.id} style={{borderBottom:`1px solid ${C.border}`,
+              borderLeft:`4px solid ${mesaCor[ped.mesa]||C.yellow}`}}>
+              {/* Cabeçalho pedido */}
+              <div style={{padding:"7px 10px 4px",display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                <div style={{background:C.yellow,color:"#000",borderRadius:6,
+                  padding:"1px 8px",fontSize:13,fontWeight:900}}>
+                  #{ped.id}
+                </div>
+                <div style={{background:(mesaCor[ped.mesa]||C.yellow)+"33",
+                  color:mesaCor[ped.mesa]||C.yellow,
+                  borderRadius:5,padding:"1px 7px",fontSize:11,fontWeight:700}}>
+                  {ped.mesa}
+                </div>
+                {ped.cliente!=="—"&&
+                  <div style={{fontSize:10,color:C.muted,flex:1,
+                    overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                    {ped.cliente}
+                  </div>}
+                <div style={{fontSize:10,color:C.muted}}>{ped.hora}</div>
+              </div>
+              {/* Itens */}
+              {ped.itens.map(it=>{
+                const k=`${ped.id}-${it.id}`;
+                const on=preparando.includes(k);
+                return(
+                  <div key={it.id} style={{padding:"5px 10px 6px",
+                    display:"flex",alignItems:"center",gap:7,
+                    background:on?C.yellow+"11":"transparent"}}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:on?800:400,
+                        color:on?C.yellow:C.text,
+                        overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                        {it.item.nome}
+                        {it.tamanho&&<span style={{color:C.muted,fontWeight:400,fontSize:10}}> {it.tamanho}</span>}
+                      </div>
+                      {it.pao&&<div style={{fontSize:10,color:"#A78BFA"}}>🍞 {it.pao}</div>}
+                      {it.removidos?.length>0&&
+                        <div style={{fontSize:10,color:C.red}}>s/ {it.removidos.join(", ")}</div>}
+                      {it.ponto&&<div style={{fontSize:10,color:"#888"}}>🔥 {it.ponto}</div>}
+                    </div>
+                    <button onClick={()=>toggle(ped.id,it.id)} style={{
+                      background:on?C.yellow:"#2A2A2A",border:"none",borderRadius:6,
+                      color:on?"#000":C.muted,padding:"4px 8px",
+                      cursor:"pointer",fontSize:10,fontWeight:800,whiteSpace:"nowrap"}}>
+                      {on?"▶ Fazendo":"▶ Iniciar"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+        {/* TELA PRINCIPAL */}
+        <div style={{flex:1,overflowY:"auto",padding:14}}>
+          {emPreparo.length===0 ?
+            <div style={{height:"100%",display:"flex",flexDirection:"column",
+              alignItems:"center",justifyContent:"center",gap:12,color:C.muted}}>
+              <div style={{fontSize:52}}>🍳</div>
+              <div style={{fontSize:16}}>Clique em "Iniciar" na fila ao lado</div>
+              <div style={{fontSize:13}}>Os ingredientes aparecem aqui</div>
+            </div>
+          :
+            <div style={{display:"grid",gridTemplateColumns:cols,gap:12}}>
+              {emPreparo.map(({ped,it})=>(
+                <CardPreparo key={`${ped.id}-${it.id}`} ped={ped} it={it}
+                  cor={mesaCor[ped.mesa]||C.yellow}
+                  onFinalizar={()=>finalizar(ped.id,it.id)}/>
+              ))}
+            </div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CardPreparo({ped,it,cor,onFinalizar}){
+  return(
+    <div style={{background:C.card,borderRadius:16,border:`2px solid ${cor}`,
+      padding:14,display:"flex",flexDirection:"column",gap:10}}>
+      {/* Número do pedido em destaque */}
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <div style={{background:C.yellow,color:"#000",borderRadius:8,
+          padding:"4px 14px",fontSize:24,fontWeight:900,letterSpacing:-1,lineHeight:1}}>
+          #{ped.id}
+        </div>
+        <div style={{flex:1}}>
+          <div style={{background:cor+"33",color:cor,borderRadius:6,
+            padding:"2px 8px",fontSize:12,fontWeight:700,display:"inline-block"}}>
+            {ped.mesa}
+          </div>
+          {ped.cliente!=="—"&&
+            <div style={{fontSize:11,color:C.muted,marginTop:2}}>{ped.cliente}</div>}
+        </div>
+        <div style={{fontSize:11,color:C.muted}}>{ped.hora}</div>
+      </div>
+      {/* Nome do lanche */}
+      <div style={{fontWeight:900,fontSize:18,color:C.yellow,lineHeight:1,
+        borderBottom:`1px solid ${C.border}`,paddingBottom:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <span>{it.item.nome}</span>
+          {it.eBebida && it.qtdBebida>1 &&
+            <span style={{background:"#4ECDC422",color:"#4ECDC4",borderRadius:8,
+              padding:"2px 10px",fontSize:16,fontWeight:900}}>x{it.qtdBebida}</span>}
+        </div>
+        {it.tamanho&&<span style={{color:C.muted,fontWeight:400,fontSize:13}}> — {it.tamanho}</span>}
+        {it.item.sub&&<div style={{color:C.muted,fontWeight:400,fontSize:12,marginTop:2}}>{it.item.sub}</div>}
+      </div>
+      {/* Tags de preparo */}
+      {(it.pao||it.hamburguer||it.ponto)&&
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          {it.pao        &&<PTag c="#A78BFA">🍞 Pão {it.pao}</PTag>}
+          {it.hamburguer &&<PTag c="#F59E0B">🥩 {it.hamburguer}</PTag>}
+          {it.ponto      &&<PTag c="#FB923C">🔥 {it.ponto}</PTag>}
+        </div>}
+      {/* Copos para bebidas */}
+      {it.eBebida && it.copos?.some(c=>c.qtd>0) &&
+        <div style={{background:"#4ECDC411",border:"1px solid #4ECDC444",
+          borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:6}}>
+          <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"#4ECDC4",marginBottom:2}}>
+            🧊 Copos e acompanhamentos
+          </div>
+          {it.copos.filter(c=>c.qtd>0).map(c=>(
+            <div key={c.tipo} style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:20,fontWeight:900,color:"#4ECDC4",minWidth:28}}>{c.qtd}×</span>
+              <span style={{fontSize:14,color:C.text,fontWeight:600}}>{c.tipo}</span>
+            </div>
+          ))}
+        </div>}
+      {/* Ingredientes */}
+      {it.ing.length>0 ?
+        <div style={{display:"flex",flexDirection:"column",gap:5}}>
+          <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,
+            color:C.muted,marginBottom:2}}>Ingredientes</div>
+          {it.item.ing.map(ing=>{
+            const rem=it.removidos?.includes(ing);
+            return(
+              <div key={ing} style={{display:"flex",alignItems:"center",gap:9,
+                padding:"7px 11px",borderRadius:9,
+                background:rem?C.red+"14":C.green+"0E",
+                border:`1px solid ${rem?C.red+"44":C.green+"28"}`}}>
+                <span style={{fontSize:14}}>{rem?"✕":"✓"}</span>
+                <span style={{fontSize:14,fontWeight:600,flex:1,
+                  color:rem?C.red:C.text,textDecoration:rem?"line-through":"none"}}>
+                  {ing}
+                </span>
+                {rem&&<span style={{fontSize:10,color:C.red,fontWeight:900}}>RETIRAR</span>}
+              </div>
+            );
+          })}
+        </div>
+      :
+        <div style={{color:C.muted,fontSize:13,fontStyle:"italic"}}>Sem ingredientes específicos</div>}
+      {/* Observações */}
+      {it.obs&&
+        <div style={{background:"#FBBF2418",border:"1px solid #FBBF2444",
+          borderRadius:9,padding:"7px 10px",color:"#FDE68A",fontSize:12,fontWeight:600}}>
+          📝 {it.obs}
+        </div>}
+      {/* Alerta remoções */}
+      {it.removidos?.length>0&&
+        <div style={{background:C.red+"14",border:`1px solid ${C.red}44`,
+          borderRadius:9,padding:"7px 11px",color:C.red,fontSize:12,fontWeight:800}}>
+          ⚠️ SEM: {it.removidos.join(", ")}
+        </div>}
+      <button onClick={onFinalizar} style={{
+        background:C.green,border:"none",borderRadius:10,padding:"13px",
+        color:"#fff",fontWeight:900,fontSize:14,cursor:"pointer",marginTop:"auto"}}>
+        ✓ Lanche Pronto!
+      </button>
+    </div>
+  );
+}
+
+// ── AUTOCOMPLETE CLIENTE
+function ClienteAutocomplete({value,clientes,onChange,onSelect}){
+  const [aberto,setAberto] = useState(false);
+  const sugestoes = value.length>0
+    ? clientes.filter(c=>c.nome.toLowerCase().includes(value.toLowerCase())).slice(0,6)
+    : [];
+  return(
+    <div style={{position:"relative",marginTop:8}}>
+      <input value={value}
+        onChange={e=>{onChange(e.target.value);setAberto(true);}}
+        onFocus={()=>setAberto(true)}
+        onBlur={()=>setTimeout(()=>setAberto(false),150)}
+        placeholder="Nome do cliente…"
+        style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,
+          borderRadius:8,padding:"8px 11px",color:C.text,fontSize:14,
+          boxSizing:"border-box",outline:"none"}}/>
+      {aberto && sugestoes.length>0 &&
+        <div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:99,
+          background:C.card,border:`1px solid ${C.yellow}`,borderRadius:10,
+          overflow:"hidden",marginTop:3,boxShadow:"0 8px 24px #0006"}}>
+          {sugestoes.map(c=>(
+            <button key={c.id} onMouseDown={()=>{onSelect(c);setAberto(false);}} style={{
+              width:"100%",padding:"10px 13px",background:"none",border:"none",
+              borderBottom:`1px solid ${C.border}`,cursor:"pointer",textAlign:"left",
+              display:"flex",alignItems:"center",gap:10}}>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:14,color:C.yellow}}>{c.nome}</div>
+                {c.cel&&<div style={{fontSize:11,color:C.muted}}>{c.cel}</div>}
+              </div>
+              {c.historico.length>0 &&
+                <span style={{fontSize:10,color:C.muted,background:C.card2,
+                  borderRadius:10,padding:"1px 6px"}}>
+                  {c.historico.length} pedidos
+                </span>}
+            </button>
+          ))}
+        </div>}
+    </div>
+  );
+}
+
+// ── EDITOR DE BEBIDAS (unidades + copos/acompanhamentos)
+function BebidaEditor({ativo,setAtivo}){
+  function setQtdBebida(n){
+    setAtivo(a=>({...a, qtdBebida:Math.max(1,n)}));
+  }
+  function setCopo(tipo,n){
+    setAtivo(a=>({
+      ...a,
+      copos: a.copos.map(c=>c.tipo===tipo ? {...c,qtd:Math.max(0,n)} : c)
+    }));
+  }
+  const totalCopos = ativo.copos.reduce((s,c)=>s+c.qtd,0);
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:12}}>
+      {/* Quantidade de bebidas */}
+      <Sec title="Quantidade de bebidas">
+        <div style={{display:"flex",alignItems:"center",gap:0,marginTop:6}}>
+          <BtnQtd onClick={()=>setQtdBebida(ativo.qtdBebida-1)} disabled={ativo.qtdBebida<=1}>−</BtnQtd>
+          <div style={{minWidth:52,textAlign:"center",fontSize:22,fontWeight:900,color:C.yellow}}>
+            {ativo.qtdBebida}
+          </div>
+          <BtnQtd onClick={()=>setQtdBebida(ativo.qtdBebida+1)}>+</BtnQtd>
+        </div>
+      </Sec>
+
+      {/* Copos / acompanhamentos */}
+      <Sec title={`Copos e acompanhamentos${totalCopos>0?" ("+totalCopos+" copos)":""}`}>
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:6}}>
+          {ativo.copos.map(c=>(
+            <div key={c.tipo} style={{display:"flex",alignItems:"center",gap:10,
+              background:c.qtd>0?C.yellowDim:C.bg,
+              border:`1px solid ${c.qtd>0?C.yellow:C.border}`,
+              borderRadius:10,padding:"8px 12px"}}>
+              <div style={{flex:1}}>
+                <span style={{fontSize:14,fontWeight:c.qtd>0?700:400,
+                  color:c.qtd>0?C.yellow:C.text}}>
+                  {c.tipo==="Puro"?"🥤":"🧊"} {c.tipo}
+                </span>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:0}}>
+                <BtnQtd onClick={()=>setCopo(c.tipo,c.qtd-1)} disabled={c.qtd<=0}>−</BtnQtd>
+                <div style={{minWidth:36,textAlign:"center",fontSize:18,fontWeight:800,
+                  color:c.qtd>0?C.yellow:C.muted}}>{c.qtd}</div>
+                <BtnQtd onClick={()=>setCopo(c.tipo,c.qtd+1)}>+</BtnQtd>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{marginTop:8,fontSize:11,color:C.muted,fontStyle:"italic"}}>
+          Cada tipo de copo é independente da quantidade de bebidas
+        </div>
+      </Sec>
+    </div>
+  );
+}
+
+function BtnQtd({children,onClick,disabled}){
+  return(
+    <button onClick={onClick} disabled={disabled} style={{
+      width:36,height:36,borderRadius:8,border:`1px solid ${C.border}`,
+      background:disabled?C.card2:C.card,
+      color:disabled?C.muted:C.yellow,
+      cursor:disabled?"not-allowed":"pointer",
+      fontSize:20,fontWeight:800,
+      display:"flex",alignItems:"center",justifyContent:"center",
+      flexShrink:0}}>
+      {children}
+    </button>
+  );
+}
+
+// ── EDITOR DE INGREDIENTES (remover + adicionar com busca)
+function IngredientesEditor({ativo,setAtivo}){
+  const [abrirAdd,setAbrirAdd] = useState(false);
+  const [busca,setBusca]       = useState("");
+
+  // ingredientes do lanche original que ainda estão ativos
+  const originais = ativo.item.ing;
+  // ingredientes adicionados pelo garçom (não estavam no original)
+  const adicionados = ativo.ing.filter(i=>!originais.includes(i));
+
+  const disponiveis = TODOS_INGREDIENTES.filter(i=>
+    !ativo.ing.includes(i) &&
+    i.toLowerCase().includes(busca.toLowerCase())
+  );
+
+  function toggleOriginal(ing){
+    const on=ativo.ing.includes(ing);
+    setAtivo(a=>({...a,ing:on?a.ing.filter(x=>x!==ing):[...a.ing,ing]}));
+  }
+  function addIngrediente(ing){
+    setAtivo(a=>({...a,ing:[...a.ing,ing]}));
+    setBusca("");
+  }
+  function removerAdicionado(ing){
+    setAtivo(a=>({...a,ing:a.ing.filter(x=>x!==ing)}));
+  }
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      {/* Ingredientes originais */}
+      {originais.length>0 &&
+        <div>
+          <Lbl>Ingredientes — toque para remover</Lbl>
+          <div style={{display:"flex",flexWrap:"wrap",gap:7,marginTop:7}}>
+            {originais.map(ing=>{
+              const on=ativo.ing.includes(ing);
+              return(
+                <button key={ing} onClick={()=>toggleOriginal(ing)} style={{
+                  padding:"6px 12px",borderRadius:20,cursor:"pointer",fontSize:13,fontWeight:600,
+                  background:on?C.green+"20":C.red+"18",
+                  border:`1.5px solid ${on?C.green:C.red}`,
+                  color:on?C.green:C.red,
+                  textDecoration:on?"none":"line-through"}}>
+                  {on?"✓":"✕"} {ing}
+                </button>
+              );
+            })}
+          </div>
+        </div>}
+
+      {/* Ingredientes adicionados */}
+      {adicionados.length>0 &&
+        <div>
+          <Lbl>Adicionados</Lbl>
+          <div style={{display:"flex",flexWrap:"wrap",gap:7,marginTop:7}}>
+            {adicionados.map(ing=>(
+              <button key={ing} onClick={()=>removerAdicionado(ing)} style={{
+                padding:"6px 12px",borderRadius:20,cursor:"pointer",fontSize:13,fontWeight:600,
+                background:"#A78BFA22",border:"1.5px solid #A78BFA",color:"#A78BFA"}}>
+                + {ing} ✕
+              </button>
+            ))}
+          </div>
+        </div>}
+
+      {/* Botão abrir buscador */}
+      <button onClick={()=>setAbrirAdd(!abrirAdd)} style={{
+        padding:"9px 14px",borderRadius:10,border:`1.5px dashed ${C.yellow}`,
+        background:abrirAdd?C.yellowDim:"transparent",
+        color:C.yellow,cursor:"pointer",fontWeight:700,fontSize:13,
+        display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}>
+        {abrirAdd?"▲ Fechar":"＋ Adicionar ingrediente"}
+      </button>
+
+      {/* Painel de busca */}
+      {abrirAdd &&
+        <div style={{background:C.bg,border:`1px solid ${C.border}`,
+          borderRadius:12,padding:10,display:"flex",flexDirection:"column",gap:8}}>
+          <input value={busca} onChange={e=>setBusca(e.target.value)}
+            placeholder="🔍 Buscar ingrediente…"
+            autoFocus
+            style={{width:"100%",background:C.card,border:`1px solid ${C.border}`,
+              borderRadius:8,padding:"9px 12px",color:C.text,fontSize:14,
+              boxSizing:"border-box",outline:"none"}}/>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6,maxHeight:160,overflowY:"auto"}}>
+            {disponiveis.length===0 &&
+              <div style={{color:C.muted,fontSize:13,padding:6}}>
+                {busca?"Nenhum ingrediente encontrado":"Digite para buscar…"}
+              </div>}
+            {disponiveis.map(ing=>(
+              <button key={ing} onClick={()=>addIngrediente(ing)} style={{
+                padding:"6px 12px",borderRadius:20,border:"none",cursor:"pointer",
+                background:C.yellow,color:"#000",fontSize:13,fontWeight:700}}>
+                + {ing}
+              </button>
+            ))}
+          </div>
+        </div>}
+    </div>
+  );
+}
+
+// ── MICRO COMPONENTES
+function Lbl({children}){return <div style={{fontSize:10,color:C.muted,textTransform:"uppercase",letterSpacing:1,fontWeight:600}}>{children}</div>;}
+function Sec({title,children}){return <div><Lbl>{title}</Lbl><div style={{marginTop:7}}>{children}</div></div>;}
+function Crd({children,style={}}){return <div style={{background:C.card,borderRadius:12,padding:13,border:`1px solid ${C.border}`,...style}}>{children}</div>;}
+function Inp({mt=0,...props}){return <input {...props} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 11px",color:C.text,fontSize:13,boxSizing:"border-box",marginTop:mt,outline:"none"}}/>;}
+function Chip({children,ativo,cor,onClick}){return <button onClick={onClick} style={{padding:"5px 11px",borderRadius:20,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,background:ativo?cor:C.card2,color:ativo?"#000":C.muted}}>{children}</button>;}
+function Pill({children,c}){return <span style={{background:c+"22",color:c,borderRadius:20,padding:"1px 7px",fontSize:10,fontWeight:600}}>{children}</span>;}
+function KTag({children,c}){return <span style={{background:c+"22",color:c,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:700}}>{children}</span>;}
+function PTag({children,c}){return <span style={{background:c+"22",color:c,borderRadius:6,padding:"3px 8px",fontSize:11,fontWeight:700}}>{children}</span>;}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  const sw = `
+    self.addEventListener('install',e=>self.skipWaiting());
+    self.addEventListener('fetch',e=>{});
+  `;
+  const blob = new Blob([sw],{type:'application/javascript'});
+  const url  = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).catch(()=>{});
+}
+</script>
+</body>
+</html>
