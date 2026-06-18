@@ -377,7 +377,8 @@ function App(){
 
   function dispensarPronto(id){ db.ref("prontos/"+id).remove(); }
 
-  C = mkC(light);
+  // Atualizar paleta global sem causar loop
+  React.useMemo(()=>{ C = mkC(light); }, [light]);
   const toggleTema = ()=>setLight(l=>!l);
 
   return(
